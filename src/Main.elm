@@ -1,17 +1,8 @@
-module Main exposing ( main )
+module Main exposing (main)
 
 import Browser
-import Html exposing 
-    ( Html
-    , button
-    , h1
-    , p
-    , text
-    , form
-    , input
-    , div
-    )
-import Html.Attributes exposing ( value, placeholder, type_, style )
+import Html exposing (..)
+import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onClick, onSubmit)
 import Item
 
@@ -64,7 +55,7 @@ init _ =
 type Msg
     = Item Item.Msg
     | Submit String
-    | ClearTasks
+    | ClearItems
     | ToggleVisibility
     | SetNewTodoText String
 
@@ -73,27 +64,43 @@ update : Msg -> Model -> ( Model, Cmd )
 update msg model =
     case msg of
         Item itemMsg ->
-            ({ model | items = Item.update itemMsg model.items }, Cmd.none)
-        
-        Submit title -> if title == "" then (model, Cmd.none) else
-            let
-                oldId = model.nextId
-                nextId = oldId + 1
-                nextItems = Item.addTask oldId title model.items
-            in
-                ({ model | newTodoText = "", nextId = nextId, items = nextItems }, Cmd.none) 
+            ( { model | items = Item.update itemMsg model.items }, Cmd.none )
 
-        ClearTasks ->
-            ({ model | items = Item.empty }, Cmd.none)
+        Submit title ->
+            ( submitUpdate title model, Cmd.none )
+
+        ClearItems ->
+            ( { model | items = Item.empty }, Cmd.none )
 
         ToggleVisibility ->
-            ({ model | showDone = not model.showDone }, Cmd.none)
+            ( { model | showDone = not model.showDone }, Cmd.none )
 
         SetNewTodoText s ->
-            ({ model | newTodoText = s }, Cmd.none)
+            ( { model | newTodoText = s }, Cmd.none )
+
+
+submitUpdate : String -> Model -> Model
+submitUpdate title model =
+    if title == "" then
+        model
+
+    else
+        let
+            oldId =
+                model.nextId
+
+            nextId =
+                oldId + 1
+
+            nextItems =
+                Item.addItem oldId title model.items
+        in
+        { model | newTodoText = "", nextId = nextId, items = nextItems }
+
 
 
 -- VIEW
+
 
 view : Model -> Browser.Document Msg
 view model =
@@ -101,21 +108,23 @@ view model =
     , body = body model
     }
 
+
 body : Model -> List (Html Msg)
-body model = 
-    [ div [ style "width" "400px", style "margin" "auto" ]
-      [   h1 [ style "margin-top" "2em" ] [ text "Todo List" ]
-      ,   p [] [ text "Add todos" ]
-      ,   todoForm model
-      ,   div [ style "margin-top" "2em", style "display" "block", style "width" "100%"] [ button [ onClick ClearTasks ] [ text "Clear Tasks" ] ]
-      ,   div [ style "margin-top" "1em", style "display" "block", style "width" "100%" ] [ button [ onClick ToggleVisibility ] [ text "Toggle Completed"] ]
-      ,   todoItems model
-      ]
+body model =
+    [ div containerAttributes
+        [ h1 [] [ text "Todo List" ]
+        , p [] [ text "Add todos" ]
+        , todoForm model
+        , clearButton
+        , toggleVisibilityButton
+        , todoItems model
+        ]
     ]
+
 
 todoItems : Model -> Html Msg
 todoItems { items, showDone } =
-  Html.map Item (Item.todoItems showDone items)
+    div [] [ Html.map Item (Item.todoItems showDone items) ]
 
 
 todoForm : Model -> Html Msg
@@ -125,6 +134,40 @@ todoForm { newTodoText } =
             [ placeholder "New Todo Item..."
             , value newTodoText
             , Html.Events.onInput SetNewTodoText
-            ] []
-        ,   button [ type_ "submit" ] [ text "Add" ]
+            ]
+            []
+        , button [ type_ "submit" ] [ text "Add" ]
         ]
+
+
+containerAttributes : List (Html.Attribute Msg)
+containerAttributes =
+    [ style "width" "400px"
+    , style "font-size" "28px"
+    , style "margin" "auto"
+    , style "border" "1px solid"
+    , style "margin-top" "2em"
+    , style "padding-bottom" "2em"
+    , style "padding-left" "1em"
+    , style "padding-right" "1em"
+    ]
+
+
+clearButton : Html Msg
+clearButton =
+    div
+        [ style "margin-top" "1em"
+        , style "display" "block"
+        , style "width" "100%"
+        ]
+        [ button [ onClick ClearItems ] [ text "Clear Tasks" ] ]
+
+
+toggleVisibilityButton : Html Msg
+toggleVisibilityButton =
+    div
+        [ style "margin-top" "0.5em"
+        , style "display" "block"
+        , style "width" "100%"
+        ]
+        [ button [ onClick ToggleVisibility ] [ text "Toggle Completed" ] ]

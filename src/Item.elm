@@ -1,12 +1,13 @@
-module Item exposing (Items, Msg(..), update, todoItems, addTask, empty)
+module Item exposing (Items, Msg(..), addItem, empty, todoItems, update)
 
-import Html exposing
-  ( Html
-  , div
-  , p
-  , strong
-  , text
-  )
+import Html
+    exposing
+        ( Html
+        , div
+        , p
+        , strong
+        , text
+        )
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Utils exposing (h3text)
@@ -22,18 +23,24 @@ type alias Item =
 type alias Items =
     List Item
 
+
 empty : Items
-empty = []
+empty =
+    []
+
 
 type Msg
-    = AddTask Int String
+    = AddItem Int String
     | SetDone Int Bool
 
-addTask : Int -> String -> Items -> Items
-addTask id title = update (AddTask id title)
 
-makeTask : Int -> String -> Item
-makeTask id title =
+addItem : Int -> String -> Items -> Items
+addItem id title =
+    update (AddItem id title)
+
+
+makeItem : Int -> String -> Item
+makeItem id title =
     { id = id
     , title = title
     , done = False
@@ -61,8 +68,8 @@ setDoneById id value items =
 update : Msg -> Items -> Items
 update msg items =
     case msg of
-        AddTask id title ->
-            makeTask id title :: items
+        AddItem id title ->
+            makeItem id title :: items
 
         SetDone id value ->
             setDoneById id value items
@@ -70,10 +77,10 @@ update msg items =
 
 todoItems : Bool -> Items -> Html Msg
 todoItems showDone items =
-    div []
+    div [ style "font-size" "18px" ]
         [ div [] []
         , div []
-            ( items
+            (items
                 |> List.filter (\i -> showDone || not i.done)
                 |> List.map todoItem
             )
@@ -83,7 +90,8 @@ todoItems showDone items =
 
 todoItem : Item -> Html Msg
 todoItem item =
-    div [ onClick (SetDone item.id (not item.done))
+    div
+        [ onClick (SetDone item.id (not item.done))
         , style "border-bottom" "1px solid grey"
         , style "padding" "10px"
         ]
@@ -97,6 +105,7 @@ doneColor : Item -> String
 doneColor { done } =
     if done then
         "green"
+
     else
         "gray"
 
